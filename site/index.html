@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Outcome Attestation Registry</title>
+    <meta name="description" content="Documentation for OutcomeAttestationRegistry, a reusable GenLayer Intelligent Contract primitive for consensus-backed attestations.">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="mark">OAR</div>
+          <div>
+            <strong>Outcome Attestation Registry</strong>
+            <span>GenLayer Intelligent Contract</span>
+          </div>
+        </div>
+        <nav class="nav" aria-label="Documentation navigation">
+          <a href="#overview">Overview</a>
+          <a href="#why">Why it matters</a>
+          <a href="#architecture">Architecture</a>
+          <a href="#api">API</a>
+          <a href="#testing">Bradbury proof</a>
+          <a href="#integration">Integration</a>
+          <a href="#files">Repository files</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <header class="hero" id="overview">
+          <div class="eyebrow">Reusable Intelligent Contract Primitive</div>
+          <h1>Consensus-backed attestations for claims builders can reuse.</h1>
+          <p class="lead">
+            OutcomeAttestationRegistry lets GenLayer applications request, resolve, cache, and consume structured attestations about external evidence without rebuilding the same adjudication machinery in every contract.
+          </p>
+          <div class="hero-actions">
+            <a class="button primary" href="https://github.com/Manablaq/genlayer-outcome-attestation-registry">View Repository</a>
+            <a class="button" href="../contracts/outcome_attestation_registry.py">Contract Source</a>
+            <a class="button" href="../docs/testing.md">Testing Guide</a>
+          </div>
+        </header>
+
+        <div class="content">
+          <section id="why">
+            <h2>Why It Matters</h2>
+            <p>
+              Many GenLayer applications need to evaluate web data, API responses, documents, or natural-language criteria. A normal smart contract cannot do that directly, and a centralized backend becomes a trusted adjudicator.
+            </p>
+            <p>
+              This registry makes the adjudication result reusable. Escrows, bounties, prediction markets, DAO tools, reputation systems, agent marketplaces, and policy gates can all consume the same attestation interface.
+            </p>
+            <div class="grid">
+              <div class="card">
+                <strong>Structured Requests</strong>
+                <p>Each request records a subject, claim, evidence URI, criteria, expiry, and canonical fingerprint.</p>
+              </div>
+              <div class="card">
+                <strong>Resolver Profiles</strong>
+                <p>Structured evidence can use deterministic profiles, while semantic evidence can use the generic AI resolver path.</p>
+              </div>
+              <div class="card">
+                <strong>Consumer Methods</strong>
+                <p>Downstream builders can call verifier methods instead of parsing full attestation objects.</p>
+              </div>
+            </div>
+          </section>
+
+          <section id="architecture">
+            <h2>Architecture</h2>
+            <p>
+              The contract separates the registry lifecycle from resolver profiles. This keeps the core interface stable while allowing new evidence-specific resolvers to be added over time.
+            </p>
+            <img class="diagram" src="assets/architecture.svg" alt="Outcome Attestation Registry architecture diagram">
+          </section>
+
+          <section id="api">
+            <h2>API</h2>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Method</th>
+                  <th>Purpose</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>request_attestation</code></td>
+                  <td>Create a request or return an existing fresh request or attestation for the same fingerprint.</td>
+                </tr>
+                <tr>
+                  <td><code>resolve_attestation</code></td>
+                  <td>Generic AI/web resolver for semantic claims.</td>
+                </tr>
+                <tr>
+                  <td><code>resolve_github_repo_attestation</code></td>
+                  <td>Deterministic GitHub repository resolver for structured repository metadata evidence.</td>
+                </tr>
+                <tr>
+                  <td><code>get_attestation</code></td>
+                  <td>Read the full stored attestation by request id.</td>
+                </tr>
+                <tr>
+                  <td><code>get_latest_by_fingerprint</code></td>
+                  <td>Find the latest resolved attestation for a canonical claim fingerprint.</td>
+                </tr>
+                <tr>
+                  <td><code>is_attested_true</code></td>
+                  <td>Verifier method for downstream contracts and frontends.</td>
+                </tr>
+                <tr>
+                  <td><code>is_attested_false</code></td>
+                  <td>Verifier method for negative attestations.</td>
+                </tr>
+                <tr>
+                  <td><code>is_fresh</code></td>
+                  <td>Check whether an attestation exists and has not expired.</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section id="testing">
+            <h2>Bradbury Proof</h2>
+            <p>
+              The active v4 deployment passed a positive smoke test on GenLayer Bradbury Testnet.
+            </p>
+            <div class="proof">
+              <div class="metric">
+                <span>Contract</span>
+                <strong>0xd660...9F63</strong>
+              </div>
+              <div class="metric">
+                <span>Request</span>
+                <strong>2</strong>
+              </div>
+              <div class="metric">
+                <span>Result</span>
+                <strong>true</strong>
+              </div>
+              <div class="metric">
+                <span>Confidence</span>
+                <strong>9500</strong>
+              </div>
+            </div>
+            <pre><code>subject: github.com/genlayerlabs/genlayer-project-boilerplate
+evidence_uri: https://api.github.com/repos/genlayerlabs/genlayer-project-boilerplate
+reason_code: github_repo_verified
+is_attested_true(2, 7000): true
+get_latest_by_fingerprint(...): 2</code></pre>
+          </section>
+
+          <section id="integration">
+            <h2>Integration Pattern</h2>
+            <p>
+              Consumer contracts should depend on the verifier surface. They do not need to parse confidence, summaries, or evidence digests themselves unless their application needs deeper inspection.
+            </p>
+            <pre><code>registry = OutcomeAttestationRegistry(registry_address)
+
+if not registry.view().is_fresh(request_id):
+    raise gl.vm.UserError("attestation expired")
+
+if not registry.view().is_attested_true(request_id, u32(8000)):
+    raise gl.vm.UserError("attestation not verified")</code></pre>
+          </section>
+
+          <section id="files">
+            <h2>Repository Files</h2>
+            <table class="table">
+              <tbody>
+                <tr>
+                  <td><code>contracts/outcome_attestation_registry.py</code></td>
+                  <td>Primary Intelligent Contract source.</td>
+                </tr>
+                <tr>
+                  <td><code>studio_bradbury/outcome_attestation_registry.py</code></td>
+                  <td>Paste-ready Studio deployment copy.</td>
+                </tr>
+                <tr>
+                  <td><code>docs/</code></td>
+                  <td>Guide, architecture, testing, and submission documentation.</td>
+                </tr>
+                <tr>
+                  <td><code>site/</code></td>
+                  <td>Static documentation site suitable for GitHub Pages.</td>
+                </tr>
+                <tr>
+                  <td><code>examples/</code></td>
+                  <td>Consumer contract and GenLayerJS usage sketches.</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+        </div>
+
+        <footer class="footer">
+          OutcomeAttestationRegistry is documented as an Intelligent Contract primitive. The site is an information center for the contract, not a replacement for the contract source.
+        </footer>
+      </main>
+    </div>
+  </body>
+</html>

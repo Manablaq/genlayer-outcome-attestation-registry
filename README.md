@@ -1,8 +1,19 @@
 # Outcome Attestation Registry
 
-`OutcomeAttestationRegistry` is a reusable GenLayer Intelligent Contract primitive for creating, resolving, caching, and consuming consensus-backed attestations about claims.
+A reusable GenLayer **Intelligent Contract** primitive for creating, resolving, caching, and consuming consensus-backed attestations about external outcomes and structured claims.
 
-It is designed for other builders to integrate into escrow contracts, prediction markets, bounty platforms, DAO tooling, reputation systems, agent marketplaces, and policy gates.
+The contract is built for GenLayer builders who need a shared adjudication layer instead of reimplementing web access, AI evaluation, result storage, expiry, and verifier methods inside every application contract.
+
+```text
+subject + claim + evidence_uri + criteria -> attestation result
+```
+
+## Active Deployment
+
+```text
+Network:  GenLayer Bradbury Testnet
+Contract: 0xd660ef089b4798e9c47B94CDDDE0EcEe5Fd29F63
+```
 
 Repository:
 
@@ -10,51 +21,36 @@ Repository:
 https://github.com/Manablaq/genlayer-outcome-attestation-registry
 ```
 
-Active Bradbury deployment:
+Documentation site:
 
 ```text
-0xd660ef089b4798e9c47B94CDDDE0EcEe5Fd29F63
+docs/index.html
 ```
 
-## Why This Matters
+## What It Does
 
-Many GenLayer applications need the same hard thing: evaluate a real-world or AI-readable claim using web data, documents, or natural-language criteria. Without a shared primitive, every app has to reimplement request tracking, prompt safety, consensus validation, result normalization, expiry, and consumer APIs.
+`OutcomeAttestationRegistry` lets a builder:
 
-This registry gives builders a standard interface:
+1. Create a structured attestation request.
+2. Resolve it with a GenLayer resolver profile.
+3. Store the result on-chain.
+4. Reuse the result by canonical fingerprint.
+5. Expose simple verifier methods for other contracts and frontends.
 
-1. Request an attestation.
-2. Resolve it through GenLayer's AI/web consensus.
-3. Let any contract read the result through small view methods.
+The registry is intentionally not an app-specific escrow, market, bounty, or reputation contract. It is a reusable Intelligent Contract building block those systems can depend on.
 
-## What It Stores
+## Why It Is Useful
 
-Each attestation stores:
+Many GenLayer applications need to answer questions like:
 
-- requester
-- subject
-- claim
-- evidence URI
-- acceptance criteria
-- canonical fingerprint
-- result code
-- confidence in basis points from `0` to `10000`
-- reason code
-- short summary
-- evidence digest
-- creation, resolution, and expiry timestamps
-- resolver address
+- Did this repository, endpoint, or document satisfy the requirement?
+- Does submitted work meet written acceptance criteria?
+- Is an off-chain event or public data source enough to unlock an action?
+- Can another contract safely rely on an already-resolved claim?
 
-Result codes:
+This registry gives those applications a common attestation interface.
 
-```text
-0 = unknown
-1 = true
-2 = false
-3 = inconclusive
-4 = error
-```
-
-## Public API
+## Core API
 
 ```python
 request_attestation(subject, claim, evidence_uri, criteria, ttl_seconds) -> u256
@@ -67,35 +63,84 @@ is_attested_false(request_id, min_confidence) -> bool
 is_fresh(request_id) -> bool
 ```
 
-## Design Notes
-
-- Duplicate requests reuse fresh attestations via canonical fingerprints.
-- Resolver profiles are supported. Structured API claims can use deterministic profile resolvers; semantic claims can use the generic LLM resolver.
-- Nondeterministic web and LLM work happens only inside the resolver's nondet block.
-- Storage writes happen only after consensus returns an agreed structured result.
-- Evidence is treated as untrusted text inside prompts to reduce prompt injection risk.
-- The validator accepts only schema-valid outputs with matching verdicts, matching evidence digest, and bounded confidence drift.
-- Consumer contracts do not need to parse prose; they can call `is_attested_true` or `is_attested_false`.
-
-## Example Claim
+## Result Codes
 
 ```text
-Subject: github.com/genlayerlabs/example-project
-Claim: The latest main branch CI run is passing.
-Evidence URI: https://api.github.com/repos/genlayerlabs/example-project/actions/runs?branch=main&per_page=1
-Criteria: Return true only if the latest workflow run conclusion is success. Return inconclusive if the response does not clearly contain a latest completed run.
+0 = unknown
+1 = true
+2 = false
+3 = inconclusive
+4 = error
 ```
 
-## Files
+## Bradbury Proof
 
-- `contracts/outcome_attestation_registry.py` - the Intelligent Contract.
-- `studio_bradbury/outcome_attestation_registry.py` - frozen paste-ready Studio/Bradbury deployment copy.
-- `examples/consumer_contract.py` - a minimal contract that consumes attestations.
-- `examples/genlayer-js-usage.ts` - frontend/SDK usage sketch.
-- `API_MANIFEST.md` - exact public API and storage schema.
-- `DEPLOYMENT_BRADBURY.md` - accepted Bradbury deployment record.
-- `STUDIO_BRADBURY_TEST_PLAN.md` - manual deploy and smoke-test checklist.
+The v4 deterministic GitHub resolver was tested on Bradbury.
 
-## Submission Positioning
+```text
+request_id: 2
+subject: github.com/genlayerlabs/genlayer-project-boilerplate
+evidence_uri: https://api.github.com/repos/genlayerlabs/genlayer-project-boilerplate
+result: 1
+confidence: 9500
+reason_code: github_repo_verified
+```
 
-This is a primitive, not a one-off app. It standardizes reusable outcome adjudication for the GenLayer ecosystem.
+Verifier proof:
+
+```text
+is_attested_true(2, 7000): true
+get_latest_by_fingerprint(...): 2
+```
+
+## Repository Layout
+
+```text
+contracts/
+  outcome_attestation_registry.py
+
+studio_bradbury/
+  outcome_attestation_registry.py
+
+examples/
+  consumer_contract.py
+  genlayer-js-usage.ts
+
+docs/
+  index.html
+  styles.css
+  assets/architecture.svg
+  guide.md
+  architecture.md
+  testing.md
+  submission.md
+
+site/
+  index.html
+  styles.css
+  assets/architecture.svg
+
+API_MANIFEST.md
+DEPLOYMENT_BRADBURY.md
+STUDIO_BRADBURY_TEST_PLAN.md
+SUBMISSION_BRIEF.md
+TEST_LOG_BRADBURY.md
+```
+
+## Start Here
+
+- Open the documentation site locally: [docs/index.html](docs/index.html)
+- Read the full guide: [docs/guide.md](docs/guide.md)
+- Review the architecture: [docs/architecture.md](docs/architecture.md)
+- Reproduce the Bradbury test: [docs/testing.md](docs/testing.md)
+- See the submission summary: [docs/submission.md](docs/submission.md)
+
+## Contract Source
+
+The primary contract source is:
+
+[contracts/outcome_attestation_registry.py](contracts/outcome_attestation_registry.py)
+
+The Studio paste-ready copy is:
+
+[studio_bradbury/outcome_attestation_registry.py](studio_bradbury/outcome_attestation_registry.py)
