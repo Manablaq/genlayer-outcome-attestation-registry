@@ -39,7 +39,15 @@ Confidence is derived from the agreed result rather than model-controlled metada
 
 ## Deployment Status
 
-The prior deployment at `0xd660ef089b4798e9c47B94CDDDE0EcEe5Fd29F63` is historical and must not be presented as the corrected contract. Deploy a fresh byte-identical copy of `studio_bradbury/outcome_attestation_registry.py`, record its accepted deployment transaction, and attach new smoke-test evidence before resubmission.
+The prior deployment at `0xd660ef089b4798e9c47B94CDDDE0EcEe5Fd29F63` is historical and must not be presented as the corrected contract.
+
+```text
+Corrected Bradbury contract: 0x78C17d55FB0eA3d768527793749e1AC878b0572C
+Accepted deployment tx:     0x1227e1fe770f43c693f599c310be1eedaabdc0d24ef5eeb2aba811f4b08f5882
+Corrected source commit:    193a7192d22135c2b1e85fe5d71d2644a56705c9
+```
+
+The corrected contract completed both true and false consensus-bound smoke tests at confidence `9500`; see [TEST_LOG_BRADBURY.md](TEST_LOG_BRADBURY.md).
 
 ## Repository Layout
 
