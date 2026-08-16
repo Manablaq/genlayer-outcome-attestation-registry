@@ -40,7 +40,7 @@
   </g>
 
   <rect x="96" y="584" width="1008" height="38" rx="8" fill="#111827"/>
-  <text x="122" y="609" font-family="Inter, Arial, sans-serif" font-size="15" fill="#ffffff">Bradbury proof: request_id 2, result true, confidence 9500, is_attested_true(2, 7000) = true</text>
+  <text x="122" y="609" font-family="Inter, Arial, sans-serif" font-size="15" fill="#ffffff">Consensus proof: canonical result, confidence, and evidence digest are bound before consumer reads.</text>
 
   <defs>
     <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">

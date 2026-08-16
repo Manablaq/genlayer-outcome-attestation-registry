@@ -57,8 +57,8 @@
                 <p>Each request records a subject, claim, evidence URI, criteria, expiry, and canonical fingerprint.</p>
               </div>
               <div class="card">
-                <strong>Resolver Profiles</strong>
-                <p>Structured evidence can use deterministic profiles, while semantic evidence can use the generic AI resolver path.</p>
+                <strong>Independent Validation</strong>
+                <p>Every validator fetches the registered evidence and reapplies immutable criteria before strict agreement.</p>
               </div>
               <div class="card">
                 <strong>Consumer Methods</strong>
@@ -70,7 +70,7 @@
           <section id="architecture">
             <h2>Architecture</h2>
             <p>
-              The contract separates the registry lifecycle from resolver profiles. This keeps the core interface stable while allowing new evidence-specific resolvers to be added over time.
+              One auditable resolver evaluates every evidence source. The registry writes only after strict agreement on every consequential field.
             </p>
             <img class="diagram" src="assets/architecture.svg" alt="Outcome Attestation Registry architecture diagram">
           </section>
@@ -92,10 +92,6 @@
                 <tr>
                   <td><code>resolve_attestation</code></td>
                   <td>Generic AI/web resolver for semantic claims.</td>
-                </tr>
-                <tr>
-                  <td><code>resolve_github_repo_attestation</code></td>
-                  <td>Deterministic GitHub repository resolver for structured repository metadata evidence.</td>
                 </tr>
                 <tr>
                   <td><code>get_attestation</code></td>
@@ -124,31 +120,30 @@
           <section id="testing">
             <h2>Bradbury Proof</h2>
             <p>
-              The active v4 deployment passed a positive smoke test on GenLayer Bradbury Testnet.
+              Deploy a fresh corrected instance and capture the independent-consensus smoke test before resubmission.
             </p>
             <div class="proof">
               <div class="metric">
                 <span>Contract</span>
-                <strong>0xd660...9F63</strong>
+                <strong>Pending redeployment</strong>
               </div>
               <div class="metric">
                 <span>Request</span>
-                <strong>2</strong>
+                <strong>Pending</strong>
               </div>
               <div class="metric">
                 <span>Result</span>
-                <strong>true</strong>
+                <strong>Canonical</strong>
               </div>
               <div class="metric">
                 <span>Confidence</span>
-                <strong>9500</strong>
+                <strong>Bound</strong>
               </div>
             </div>
-            <pre><code>subject: github.com/genlayerlabs/genlayer-project-boilerplate
-evidence_uri: https://api.github.com/repos/genlayerlabs/genlayer-project-boilerplate
-reason_code: github_repo_verified
-is_attested_true(2, 7000): true
-get_latest_by_fingerprint(...): 2</code></pre>
+            <pre><code>result: true | false | inconclusive
+confidence: canonical for the agreed result
+evidence_digest: derived from independently fetched evidence
+consensus_bound: true</code></pre>
           </section>
 
           <section id="integration">

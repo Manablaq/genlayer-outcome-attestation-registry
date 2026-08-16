@@ -126,15 +126,11 @@ def _normalize_resolution(raw, evidence_uri: str, evidence_text: str):
     if result not in ("true", "false", "inconclusive", "error"):
         result = "inconclusive"
 
-    confidence = _clamp_confidence(raw.get("confidence", 0))
-    reason_code = _safe_reason_code(str(raw.get("reason_code", "unspecified")))
-    summary = str(raw.get("summary", ""))[:512]
-
     return {
         "result": result,
-        "confidence": confidence,
-        "reason_code": reason_code,
-        "summary": summary,
+        "confidence": _canonical_confidence(result),
+        "reason_code": _canonical_reason_code(result),
+        "summary": _canonical_summary(result),
         "evidence_digest": _evidence_digest(evidence_uri, evidence_text)[:128],
     }
 
@@ -165,6 +161,34 @@ def _coerce_json_object(text: str):
     }
 
 
+def _canonical_confidence(result: str) -> int:
+    if result == "true" or result == "false":
+        return 9500
+    if result == "inconclusive":
+        return 6000
+    return 0
+
+
+def _canonical_reason_code(result: str) -> str:
+    if result == "true":
+        return "criteria_satisfied"
+    if result == "false":
+        return "criteria_not_satisfied"
+    if result == "inconclusive":
+        return "insufficient_or_ambiguous_evidence"
+    return "evaluation_error"
+
+
+def _canonical_summary(result: str) -> str:
+    if result == "true":
+        return "The registered criteria are satisfied by the independently reviewed evidence."
+    if result == "false":
+        return "The registered criteria are not satisfied by the independently reviewed evidence."
+    if result == "inconclusive":
+        return "The registered evidence is insufficient or ambiguous under the stored criteria."
+    return "The registered evidence could not be evaluated."
+
+
 def _is_valid_resolution(data) -> bool:
     if not isinstance(data, dict):
         return False
@@ -178,48 +202,28 @@ def _is_valid_resolution(data) -> bool:
         and isinstance(data.get("reason_code"), str)
         and isinstance(data.get("summary"), str)
         and isinstance(data.get("evidence_digest"), str)
+        and data.get("confidence") == _canonical_confidence(result)
+        and data.get("reason_code") == _canonical_reason_code(result)
+        and data.get("summary") == _canonical_summary(result)
     )
 
 
-def _fetch_github_repo_snapshot(evidence_uri: str) -> str:
+def _evaluate_attestation_snapshot(snapshot) -> str:
+    """The complete non-deterministic boundary for evidence attestation."""
+    evidence_text = _fetch_evidence_for_consensus(snapshot["evidence_uri"])
+    prompt = _build_resolution_prompt(
+        snapshot["subject"],
+        snapshot["claim"],
+        snapshot["evidence_uri"],
+        evidence_text,
+        snapshot["criteria"],
+    )
     try:
-        response = gl.nondet.web.get(evidence_uri)
-        body = response.body.decode("utf-8", errors="replace")
-    except Exception as exc:
-        return json.dumps(
-            {
-                "error": str(exc)[:256],
-                "fetch_ok": False,
-            },
-            sort_keys=True,
-        )
-
-    try:
-        data = json.loads(body)
+        raw = gl.nondet.exec_prompt(prompt, response_format="json")
     except Exception:
-        return json.dumps(
-            {
-                "error": "invalid_json",
-                "fetch_ok": True,
-            },
-            sort_keys=True,
-        )
-
-    owner = data.get("owner", {})
-    if not isinstance(owner, dict):
-        owner = {}
-
+        raw = {"result": "error"}
     return json.dumps(
-        {
-            "fetch_ok": True,
-            "full_name": str(data.get("full_name", "")),
-            "name": str(data.get("name", "")),
-            "owner_login": str(owner.get("login", "")),
-            "description": str(data.get("description", "")),
-            "html_url": str(data.get("html_url", "")),
-            "archived": bool(data.get("archived", False)),
-            "disabled": bool(data.get("disabled", False)),
-        },
+        _normalize_resolution(raw, snapshot["evidence_uri"], evidence_text),
         sort_keys=True,
     )
 
@@ -257,6 +261,7 @@ class Attestation:
     resolved_at: u256
     expires_at: u256
     resolver: Address
+    consensus_bound: bool
 
 
 class OutcomeAttestationRegistry(gl.Contract):
@@ -336,155 +341,24 @@ class OutcomeAttestationRegistry(gl.Contract):
         if req.resolved:
             raise gl.vm.UserError("request already resolved")
 
-        subject = req.subject
-        claim = req.claim
-        evidence_uri = req.evidence_uri
-        criteria = req.criteria
-        fingerprint = req.fingerprint
+        snapshot = {
+            "subject": req.subject,
+            "claim": req.claim,
+            "evidence_uri": req.evidence_uri,
+            "criteria": req.criteria,
+        }
 
-        def leader_fn():
-            evidence_text = _fetch_evidence_for_consensus(evidence_uri)
-            prompt = _build_resolution_prompt(
-                subject,
-                claim,
-                evidence_uri,
-                evidence_text,
-                criteria,
-            )
-            try:
-                raw = gl.nondet.exec_prompt(prompt, response_format="json")
-            except Exception as exc:
-                raw = {
-                    "result": "error",
-                    "confidence": 0,
-                    "reason_code": "llm_call_failed",
-                    "summary": str(exc)[:256],
-                }
-            return _normalize_resolution(raw, evidence_uri, evidence_text)
+        def evaluate_attestation() -> str:
+            # Each validator fetches the registered evidence and reapplies the
+            # immutable criteria. No storage is touched in this boundary.
+            return _evaluate_attestation_snapshot(snapshot)
 
-        def validator_fn(leader_result) -> bool:
-            if not isinstance(leader_result, gl.vm.Return):
-                return False
-            leader_data = leader_result.calldata
-            if not _is_valid_resolution(leader_data):
-                return False
+        agreed_json = gl.eq_principle.strict_eq(evaluate_attestation)
+        agreed = _coerce_json_object(agreed_json)
+        if not _is_valid_resolution(agreed):
+            raise gl.vm.UserError("consensus returned an invalid attestation")
 
-            # Non-comparative validation: validators accept only normalized,
-            # bounded outputs. This avoids requiring multiple LLM calls to
-            # produce byte-identical judgments for the same evidence.
-            return len(leader_data["summary"]) <= 512
-
-        agreed = gl.vm.run_nondet_unsafe(leader_fn, validator_fn)
-
-        result = self._result_code(str(agreed["result"]))
-        confidence = u32(int(agreed["confidence"]))
-        if confidence > MAX_CONFIDENCE:
-            confidence = MAX_CONFIDENCE
-
-        now = self._now()
-        self.attestations[request_id] = Attestation(
-            request_id=request_id,
-            requester=req.requester,
-            subject=subject,
-            claim=claim,
-            evidence_uri=evidence_uri,
-            criteria=criteria,
-            fingerprint=fingerprint,
-            result=result,
-            confidence=confidence,
-            reason_code=str(agreed["reason_code"])[:64],
-            summary=str(agreed["summary"])[:512],
-            evidence_digest=str(agreed["evidence_digest"])[:128],
-            created_at=req.created_at,
-            resolved_at=now,
-            expires_at=req.expires_at,
-            resolver=gl.message.sender_address,
-        )
-
-        req.resolved = True
-        self.requests[request_id] = req
-        self.latest_by_fingerprint[fingerprint] = request_id
-
-    @gl.public.write
-    def resolve_github_repo_attestation(self, request_id: u256) -> None:
-        req = self.requests.get(request_id)
-        if req.created_at == u256(0):
-            raise gl.vm.UserError("unknown request")
-        if req.resolved:
-            raise gl.vm.UserError("request already resolved")
-
-        evidence_uri = req.evidence_uri
-        subject = req.subject
-
-        snapshot = gl.eq_principle.strict_eq(
-            lambda: _fetch_github_repo_snapshot(evidence_uri)
-        )
-        data = json.loads(snapshot)
-
-        fetch_ok = bool(data.get("fetch_ok", False))
-        full_name = str(data.get("full_name", "")).lower()
-        owner_login = str(data.get("owner_login", "")).lower()
-        description = str(data.get("description", "")).lower()
-        html_url = str(data.get("html_url", "")).lower()
-        subject_normalized = _canonical(subject)
-
-        is_existing_repo = fetch_ok and full_name != ""
-        subject_matches = (
-            subject_normalized == "github.com/" + full_name
-            or subject_normalized == html_url.replace("https://", "").replace("http://", "")
-        )
-        is_genlayer_related = (
-            owner_login == "genlayerlabs"
-            or "genlayer" in full_name
-            or "genlayer" in description
-            or "genlayer" in html_url
-        )
-        is_usable = not bool(data.get("archived", False)) and not bool(data.get("disabled", False))
-
-        result = RESULT_INCONCLUSIVE
-        confidence = u32(5000)
-        reason_code = "insufficient_evidence"
-        summary = "The GitHub repository evidence was fetched but did not conclusively satisfy the criteria."
-
-        if not fetch_ok:
-            result = RESULT_ERROR
-            confidence = u32(0)
-            reason_code = "fetch_failed"
-            summary = "The GitHub repository evidence could not be fetched."
-        elif is_existing_repo and subject_matches and is_genlayer_related and is_usable:
-            result = RESULT_TRUE
-            confidence = u32(9500)
-            reason_code = "github_repo_verified"
-            summary = "The evidence identifies an existing, usable GitHub repository related to GenLayer."
-        elif is_existing_repo and not is_genlayer_related:
-            result = RESULT_FALSE
-            confidence = u32(8000)
-            reason_code = "not_genlayer_related"
-            summary = "The repository exists, but the normalized evidence does not show a GenLayer relationship."
-
-        now = self._now()
-        self.attestations[request_id] = Attestation(
-            request_id=request_id,
-            requester=req.requester,
-            subject=req.subject,
-            claim=req.claim,
-            evidence_uri=req.evidence_uri,
-            criteria=req.criteria,
-            fingerprint=req.fingerprint,
-            result=result,
-            confidence=confidence,
-            reason_code=reason_code,
-            summary=summary,
-            evidence_digest=_evidence_digest(evidence_uri, snapshot)[:128],
-            created_at=req.created_at,
-            resolved_at=now,
-            expires_at=req.expires_at,
-            resolver=gl.message.sender_address,
-        )
-
-        req.resolved = True
-        self.requests[request_id] = req
-        self.latest_by_fingerprint[req.fingerprint] = request_id
+        self._store_attestation(request_id, req, agreed)
 
     @gl.public.view
     def get_attestation(self, request_id: u256) -> Attestation:
@@ -511,6 +385,7 @@ class OutcomeAttestationRegistry(gl.Contract):
         attestation = self.attestations.get(request_id)
         return (
             attestation.result == RESULT_TRUE
+            and attestation.consensus_bound
             and attestation.confidence >= min_confidence
             and attestation.expires_at > self._now()
         )
@@ -520,6 +395,7 @@ class OutcomeAttestationRegistry(gl.Contract):
         attestation = self.attestations.get(request_id)
         return (
             attestation.result == RESULT_FALSE
+            and attestation.consensus_bound
             and attestation.confidence >= min_confidence
             and attestation.expires_at > self._now()
         )
@@ -528,6 +404,31 @@ class OutcomeAttestationRegistry(gl.Contract):
     def is_fresh(self, request_id: u256) -> bool:
         attestation = self.attestations.get(request_id)
         return attestation.created_at != u256(0) and attestation.expires_at > self._now()
+
+    def _store_attestation(self, request_id: u256, req: AttestationRequest, agreed) -> None:
+        confidence = u32(int(agreed["confidence"]))
+        self.attestations[request_id] = Attestation(
+            request_id=request_id,
+            requester=req.requester,
+            subject=req.subject,
+            claim=req.claim,
+            evidence_uri=req.evidence_uri,
+            criteria=req.criteria,
+            fingerprint=req.fingerprint,
+            result=self._result_code(str(agreed["result"])),
+            confidence=confidence,
+            reason_code=str(agreed["reason_code"])[:64],
+            summary=str(agreed["summary"])[:512],
+            evidence_digest=str(agreed["evidence_digest"])[:128],
+            created_at=req.created_at,
+            resolved_at=self._now(),
+            expires_at=req.expires_at,
+            resolver=gl.message.sender_address,
+            consensus_bound=True,
+        )
+        req.resolved = True
+        self.requests[request_id] = req
+        self.latest_by_fingerprint[req.fingerprint] = request_id
 
     def _result_code(self, result: str) -> u32:
         if result == "true":
