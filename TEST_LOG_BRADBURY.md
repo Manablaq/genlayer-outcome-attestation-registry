@@ -5,8 +5,8 @@
 ```text
 contract: PENDING_FRESH_DEPLOYMENT
 deployment_tx: PENDING_FRESH_DEPLOYMENT
-source_commit: PENDING_FINAL_COMMIT
-source_sha256: PENDING_FINAL_COMMIT
+source_commit: 0868930e7040d3b7205f9d80ec5b021d34df2ee5
+source_sha256: ed1be6469644d4ae194988ee0877673e9ad11e8e4daeca5a85f849d943c8d920
 local_tests: 13 passing
 ```
 
