@@ -1,36 +1,56 @@
 # Studio Bradbury Test Plan
 
-## Deploy
+## 1. Local Verification
 
-1. Create `outcome_attestation_registry.py` in GenLayer Studio.
-2. Paste `studio_bradbury/outcome_attestation_registry.py` exactly.
-3. Confirm it matches `contracts/outcome_attestation_registry.py` byte-for-byte.
-4. Deploy a new instance, save the address, and record the accepted deployment transaction.
+Run the commands in `docs/testing.md`. Confirm 13 tests pass and the primary and
+Studio sources are byte-identical.
 
-## Smoke Test 1: Request
+## 2. Prepare Evidence
 
-Call `request_attestation` with a stable public HTTPS evidence URL and explicit, binary criteria.
+Select a stable authoritative HTTPS record no larger than 12,000 bytes. Capture the
+exact response bytes and calculate:
 
-```text
-Return true only if the registered evidence explicitly supports the claim. Return false only if it explicitly supports the opposite. Otherwise return inconclusive.
+```bash
+curl -sS https://authority.example/immutable-record -o /tmp/oar-primary.bin
+shasum -a 256 /tmp/oar-primary.bin
+date +%s
 ```
 
-## Smoke Test 2: Resolve
+For the corroborated path, repeat with a distinct URI controlled by a different
+authority. Do not normalize, decode, or reserialize the bytes before hashing.
 
-Call `resolve_attestation(request_id)`.
+## 3. Deploy
 
-Expected behavior:
+```bash
+genlayer account unlock --account worker
+genlayer deploy --contract studio_bradbury/outcome_attestation_registry.py
+```
 
-- Every validator fetches the registered URI and reapplies the same request criteria.
-- `strict_eq` compares result, derived confidence, reason code, summary, and evidence digest.
-- The only storage write occurs after that agreement.
+Record the address, deployment transaction, exact commit, file size, and source
+SHA-256 in `DEPLOYMENT_BRADBURY.md`.
 
-## Smoke Test 3: Bind Consumer Views
+## 4. Happy Path
 
-Call `get_attestation(request_id)`. Confirm `consensus_bound: true`, then call `is_attested_true(request_id, 9500)` and `is_attested_false(request_id, 9500)`.
+1. Call `compute_fingerprint` for the complete evidence specification.
+2. Call `request_attestation` with the identical arguments.
+3. Call `resolve_attestation(request_id)`.
+4. Confirm the stored fingerprint and content hashes match the registered
+   values, with `content_verified: true` and `consensus_bound: true`.
+5. Call the matching `is_attested_true_for` or `is_attested_false_for` using the
+   computed fingerprint and an explicit consumer maximum age.
 
-Only the verifier that matches the stored canonical result may return `true`.
+## 5. Security Regressions
 
-## Regression Requirement
+1. **Substitution:** change one character of the expected fingerprint; the
+   consumer view must return `false`.
+2. **Integrity mismatch:** create a request with an incorrect hash and attempt
+   resolution; it must fail without storing an attestation.
+3. **Corroboration:** create a two-authority request with `minimum_sources = 2`;
+   resolution must store both exact hashes and `verified_source_count: 2`.
+4. **Freshness:** use an observation timestamp older than its maximum age; the
+   request must fail.
 
-Do not use `resolve_github_repo_attestation`; it was removed. The corrected contract has one evidence resolver path and no nested nondeterminism or resolver storage writes.
+## 6. Finalization
+
+Wait for each transaction to finalize. Update `TEST_LOG_BRADBURY.md` with direct
+Explorer links and exact read outputs before resubmission.

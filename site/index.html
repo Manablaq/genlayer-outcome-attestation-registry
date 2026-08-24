@@ -54,15 +54,15 @@
             <div class="grid">
               <div class="card">
                 <strong>Structured Requests</strong>
-                <p>Each request records a subject, claim, evidence URI, criteria, expiry, and canonical fingerprint.</p>
+                <p>Each request binds the claim to authoritative HTTPS sources, full SHA-256 commitments, freshness, and criteria.</p>
               </div>
               <div class="card">
                 <strong>Independent Validation</strong>
-                <p>Every validator fetches the registered evidence and reapplies immutable criteria before strict agreement.</p>
+                <p>Every validator hashes the complete evidence and reapplies immutable criteria before strict agreement.</p>
               </div>
               <div class="card">
                 <strong>Consumer Methods</strong>
-                <p>Downstream builders can call verifier methods instead of parsing full attestation objects.</p>
+                <p>Downstream builders authorize only against a stored expected specification fingerprint.</p>
               </div>
             </div>
           </section>
@@ -99,19 +99,19 @@
                 </tr>
                 <tr>
                   <td><code>get_latest_by_fingerprint</code></td>
-                  <td>Find the latest resolved attestation for a canonical claim fingerprint.</td>
+                  <td>Find the latest resolved attestation for an exact SHA-256 specification fingerprint.</td>
                 </tr>
                 <tr>
-                  <td><code>is_attested_true</code></td>
-                  <td>Verifier method for downstream contracts and frontends.</td>
+                  <td><code>is_attested_true_for</code></td>
+                  <td>Verify a true result for the consumer's exact expected fingerprint and age.</td>
                 </tr>
                 <tr>
-                  <td><code>is_attested_false</code></td>
-                  <td>Verifier method for negative attestations.</td>
+                  <td><code>is_attested_false_for</code></td>
+                  <td>Verify a false result for the consumer's exact expected fingerprint and age.</td>
                 </tr>
                 <tr>
-                  <td><code>is_fresh</code></td>
-                  <td>Check whether an attestation exists and has not expired.</td>
+                  <td><code>is_fresh_for</code></td>
+                  <td>Check binding, content verification, expiry, and consumer maximum age.</td>
                 </tr>
               </tbody>
             </table>
@@ -136,28 +136,29 @@
                 <strong>Canonical</strong>
               </div>
               <div class="metric">
-                <span>Confidence</span>
-                <strong>Bound</strong>
+                <span>Integrity</span>
+                <strong>SHA-256 bound</strong>
               </div>
             </div>
             <pre><code>result: true | false | inconclusive
-confidence: canonical for the agreed result
-evidence_digest: derived from independently fetched evidence
+primary_content_sha256: exact full-body hash
+content_verified: true
 consensus_bound: true</code></pre>
           </section>
 
           <section id="integration">
             <h2>Integration Pattern</h2>
             <p>
-              Consumer contracts should depend on the verifier surface. They do not need to parse confidence, summaries, or evidence digests themselves unless their application needs deeper inspection.
+              Consumer contracts must store the expected specification fingerprint when configuring the protected action. The caller must not choose both the request ID and expected fingerprint.
             </p>
             <pre><code>registry = OutcomeAttestationRegistry(registry_address)
 
-if not registry.view().is_fresh(request_id):
-    raise gl.vm.UserError("attestation expired")
-
-if not registry.view().is_attested_true(request_id, u32(8000)):
-    raise gl.vm.UserError("attestation not verified")</code></pre>
+if not registry.view().is_attested_true_for(
+    request_id,
+    stored_expected_fingerprint,
+    u256(1800),
+):
+    raise gl.vm.UserError("attestation not bound, fresh, and true")</code></pre>
           </section>
 
           <section id="files">

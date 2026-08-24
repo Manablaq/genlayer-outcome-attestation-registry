@@ -9,28 +9,28 @@
   <g font-family="Inter, Arial, sans-serif">
     <rect x="96" y="218" width="220" height="116" rx="12" fill="#e8f2ff" stroke="#83b7f2"/>
     <text x="124" y="260" font-size="18" font-weight="700" fill="#0f3b66">1. Request</text>
-    <text x="124" y="288" font-size="14" fill="#23445f">subject, claim, evidence URI,</text>
-    <text x="124" y="310" font-size="14" fill="#23445f">criteria, TTL</text>
+    <text x="124" y="288" font-size="14" fill="#23445f">claim, authority, URI, SHA-256,</text>
+    <text x="124" y="310" font-size="14" fill="#23445f">version, freshness, criteria</text>
 
     <rect x="384" y="218" width="220" height="116" rx="12" fill="#f0ecff" stroke="#b3a2f5"/>
     <text x="412" y="260" font-size="18" font-weight="700" fill="#3c2b78">2. Resolve</text>
-    <text x="412" y="288" font-size="14" fill="#4e4380">GenLayer web access</text>
-    <text x="412" y="310" font-size="14" fill="#4e4380">and resolver profiles</text>
+    <text x="412" y="288" font-size="14" fill="#4e4380">full-body hashing</text>
+    <text x="412" y="310" font-size="14" fill="#4e4380">and semantic evaluation</text>
 
     <rect x="672" y="218" width="220" height="116" rx="12" fill="#e9f8ef" stroke="#89d3a5"/>
     <text x="700" y="260" font-size="18" font-weight="700" fill="#1c5c35">3. Store</text>
-    <text x="700" y="288" font-size="14" fill="#2d6542">result, confidence, reason,</text>
-    <text x="700" y="310" font-size="14" fill="#2d6542">digest, expiry</text>
+    <text x="700" y="288" font-size="14" fill="#2d6542">result, full hashes, source count,</text>
+    <text x="700" y="310" font-size="14" fill="#2d6542">integrity, binding, expiry</text>
 
     <rect x="384" y="430" width="220" height="116" rx="12" fill="#fff4de" stroke="#e7bd6f"/>
     <text x="412" y="472" font-size="18" font-weight="700" fill="#765019">4. Reuse</text>
-    <text x="412" y="500" font-size="14" fill="#6b551f">canonical fingerprint</text>
-    <text x="412" y="522" font-size="14" fill="#6b551f">returns existing request id</text>
+    <text x="412" y="500" font-size="14" fill="#6b551f">SHA-256 specification</text>
+    <text x="412" y="522" font-size="14" fill="#6b551f">fingerprint cache key</text>
 
     <rect x="672" y="430" width="252" height="116" rx="12" fill="#f7ecef" stroke="#e3a1ae"/>
     <text x="700" y="472" font-size="18" font-weight="700" fill="#7a2638">5. Verify</text>
-    <text x="700" y="500" font-size="14" fill="#754050">is_attested_true</text>
-    <text x="700" y="522" font-size="14" fill="#754050">is_attested_false / is_fresh</text>
+    <text x="700" y="500" font-size="14" fill="#754050">is_attested_true_for</text>
+    <text x="700" y="522" font-size="14" fill="#754050">exact fingerprint + age</text>
 
     <path d="M316 276 H384" stroke="#526070" stroke-width="2" marker-end="url(#arrow)"/>
     <path d="M604 276 H672" stroke="#526070" stroke-width="2" marker-end="url(#arrow)"/>
@@ -40,7 +40,7 @@
   </g>
 
   <rect x="96" y="584" width="1008" height="38" rx="8" fill="#111827"/>
-  <text x="122" y="609" font-family="Inter, Arial, sans-serif" font-size="15" fill="#ffffff">Consensus proof: canonical result, confidence, and evidence digest are bound before consumer reads.</text>
+  <text x="122" y="609" font-family="Inter, Arial, sans-serif" font-size="15" fill="#ffffff">Consensus proof: result, full content hashes, integrity, and source count bind before exact-spec consumer reads.</text>
 
   <defs>
     <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">

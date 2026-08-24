@@ -2,21 +2,39 @@
 
 ## Lifecycle
 
-1. Call `request_attestation` with a subject, claim, public evidence URI, criteria, and expiry.
-2. The contract stores an immutable request snapshot and a canonical fingerprint.
-3. Call `resolve_attestation`.
-4. Every validator independently fetches the registered evidence and applies the stored criteria.
-5. Strict equality accepts a full canonical result before the contract writes it.
-6. Consumers use `is_attested_true`, `is_attested_false`, or `is_fresh`.
+1. Fetch the authoritative evidence bytes and compute their SHA-256.
+2. Select the authority, immutable version label, observation time, maximum
+   evidence age, semantic criteria, and attestation TTL.
+3. Optionally add a second HTTPS source from an independent authority and set
+   `minimum_sources` to `2`.
+4. Call `compute_fingerprint` and store that fingerprint in the consuming
+   contract or action configuration.
+5. Call `request_attestation` with the exact same specification.
+6. Call `resolve_attestation` within 24 hours and before the evidence becomes
+   stale.
+7. Validators independently fetch, hash, and evaluate the registered sources.
+8. Consumers call `is_attested_true_for`, `is_attested_false_for`, or
+   `is_fresh_for` with their stored expected fingerprint and maximum age.
 
-## Independent Validation
+## Source Selection
 
-Validators do not merely inspect a leader payload. They repeat the evidence fetch and criteria evaluation. The outcome, canonical confidence, reason, summary, and evidence digest must all match under strict equality. Confidence is derived by result category, not supplied by an untrusted model.
+Use authoritative HTTPS endpoints. Prefer immutable URLs, signed records,
+versioned APIs, or commit-addressed files. The SHA-256 commitment remains
+mandatory even when the URL is immutable. If one source is not sufficient for
+the use case, require two authorities rather than placing two URLs behind the
+same publisher.
 
-## Consumer Safety
+## Safe Consumer Pattern
 
-`is_attested_true` and `is_attested_false` require `consensus_bound = true`, freshness, the exact stored result, and the requested confidence threshold. A schema-valid but contradictory output cannot change downstream behavior.
+Never accept an arbitrary expected fingerprint from the same caller who
+supplies `request_id`. The consumer must store the expected fingerprint when
+its protected action is configured. See
+[`examples/consumer_contract.py`](../examples/consumer_contract.py).
 
-## Evidence Sources
+## Limits
 
-Use stable public HTTPS sources with a precise, binary policy. GitHub API and document URLs are supported through the same generic resolver; there is no special GitHub execution path.
+- Request resolution window: 24 hours
+- Attestation TTL: 5 minutes to 30 days; zero selects 7 days
+- Evidence observation age policy: 1 minute to 30 days
+- Fetched body: 12,000 bytes per source, ensuring the complete accepted body is
+  available to semantic evaluation as well as full-body hashing
