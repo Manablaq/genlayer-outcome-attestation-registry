@@ -1,11 +1,11 @@
 # Bradbury Deployment Record
 
-## Hardened Release — Deployment Required
+## Hardened Release — Live Verification In Progress
 
 ```text
-contract: PENDING_FRESH_DEPLOYMENT
-deployment_tx: PENDING_FRESH_DEPLOYMENT
-deployment_status: PENDING
+contract: 0x981C81A7b532Ca062a1443EB43cd294d8E6d6558
+deployment_tx: 0xcaa934bf722f484b6edaaf0629f7f39f7c8a4d9a5deb91fc23df061ee81e0505
+deployment_status: ACCEPTED (finalization pending)
 source_commit: 0868930e7040d3b7205f9d80ec5b021d34df2ee5
 source_sha256: ed1be6469644d4ae194988ee0877673e9ad11e8e4daeca5a85f849d943c8d920
 ```
@@ -16,8 +16,10 @@ freshness and corroboration policies, and fingerprint-bound consumer methods.
 It requires a new contract address because the public storage schema and API
 changed.
 
-Do not mark this release submission-ready until the deployment and every live
-regression in `STUDIO_BRADBURY_TEST_PLAN.md` are recorded.
+The exact committed source deployed successfully with an `AGREE` consensus and
+`FINISHED_WITH_RETURN`. Do not mark this release submission-ready until the
+transaction is finalized and every live regression in
+`STUDIO_BRADBURY_TEST_PLAN.md` is recorded.
 
 ## Historical Deployments — Not Valid for This Release
 

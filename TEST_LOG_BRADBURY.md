@@ -3,8 +3,8 @@
 ## Hardened Release
 
 ```text
-contract: PENDING_FRESH_DEPLOYMENT
-deployment_tx: PENDING_FRESH_DEPLOYMENT
+contract: 0x981C81A7b532Ca062a1443EB43cd294d8E6d6558
+deployment_tx: 0xcaa934bf722f484b6edaaf0629f7f39f7c8a4d9a5deb91fc23df061ee81e0505
 source_commit: 0868930e7040d3b7205f9d80ec5b021d34df2ee5
 source_sha256: ed1be6469644d4ae194988ee0877673e9ad11e8e4daeca5a85f849d943c8d920
 local_tests: 13 passing
@@ -14,7 +14,7 @@ local_tests: 13 passing
 
 | Regression | Transaction / read | Expected result |
 | --- | --- | --- |
-| Deploy exact committed source | Pending | `AGREE`, return |
+| Deploy exact committed source | [Explorer](https://explorer-bradbury.genlayer.com/tx/0xcaa934bf722f484b6edaaf0629f7f39f7c8a4d9a5deb91fc23df061ee81e0505) | accepted; unanimous `AGREE`; `FINISHED_WITH_RETURN`; finalization pending |
 | Create hash-pinned request | Pending | accepted request ID |
 | Resolve matching evidence | Pending | `content_verified: true` |
 | Read stored full-body hash | Pending | equals registered SHA-256 |

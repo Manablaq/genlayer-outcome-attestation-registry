@@ -20,7 +20,9 @@ hash-pinned public evidence into specification-bound attestations.
 
 ## Evidence Status
 
-The repository is prepared for a fresh deployment. Do not submit the historical
-`0x78C17...` address as the hardened release. Add the new address, accepted
-deployment transaction, source commit, source SHA-256, and completed regression
-links here only after executing `STUDIO_BRADBURY_TEST_PLAN.md`.
+The hardened source is deployed at
+`0x981C81A7b532Ca062a1443EB43cd294d8E6d6558` by transaction
+`0xcaa934bf722f484b6edaaf0629f7f39f7c8a4d9a5deb91fc23df061ee81e0505`.
+Do not resubmit until that transaction is finalized and the live regression
+links required by `STUDIO_BRADBURY_TEST_PLAN.md` are recorded. The historical
+`0x78C17...` address is not the hardened release.
