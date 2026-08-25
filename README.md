@@ -8,11 +8,10 @@ expected evidence policy -> independent fetch and full-content verification
                          -> strict semantic consensus -> bound attestation
 ```
 
-> **Release status:** the hardened source is complete, locally verified, and
-> deployed on Bradbury at
-> `0x981C81A7b532Ca062a1443EB43cd294d8E6d6558`. Live security regressions and
-> transaction finalization remain required before resubmission. The previous
-> Bradbury deployment at
+> **Release status:** hardened v2.1 source is complete and locally verified.
+> A final fresh Bradbury deployment is required because live regression testing
+> exposed and corrected uncontrolled missing-record errors in the v2 candidate
+> at `0x981C81A7b532Ca062a1443EB43cd294d8E6d6558`. The earlier deployment at
 > `0x78C17d55FB0eA3d768527793749e1AC878b0572C` does not contain these fixes and
 > is historical only.
 
