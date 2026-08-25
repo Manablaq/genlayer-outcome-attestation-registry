@@ -14,9 +14,10 @@ Downstream authorization is specification-bound: consumers must provide the
 exact expected SHA-256 fingerprint and their own maximum attestation age. An
 unrelated true request ID cannot authorize another claim.
 
-## Resubmission Gate
+## Resubmission Evidence
 
-The hardened source is locally verified but not yet deployed. Before
-resubmission, replace the pending fields in `DEPLOYMENT_BRADBURY.md` and
-`TEST_LOG_BRADBURY.md` with a fresh accepted deployment and the complete live
-regression. The previous deployment is historical evidence only.
+The hardened source is deployed on Bradbury at
+`0xce871c6045e7B1B0c3F73652BFaeD02eB06A8252`. The exact source revision,
+deployment transaction, and completed live regression are recorded in
+`DEPLOYMENT_BRADBURY.md` and `TEST_LOG_BRADBURY.md`. Previous deployments are
+historical evidence only.

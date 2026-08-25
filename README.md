@@ -8,12 +8,10 @@ expected evidence policy -> independent fetch and full-content verification
                          -> strict semantic consensus -> bound attestation
 ```
 
-> **Release status:** hardened v2.1 source is complete and locally verified.
-> A final fresh Bradbury deployment is required because live regression testing
-> exposed and corrected uncontrolled missing-record errors in the v2 candidate
-> at `0x981C81A7b532Ca062a1443EB43cd294d8E6d6558`. The earlier deployment at
-> `0x78C17d55FB0eA3d768527793749e1AC878b0572C` does not contain these fixes and
-> is historical only.
+> **Release status:** hardened v2.1 is deployed and verified on Bradbury at
+> [`0xce871c6045e7B1B0c3F73652BFaeD02eB06A8252`](https://explorer-bradbury.genlayer.com/address/0xce871c6045e7B1B0c3F73652BFaeD02eB06A8252).
+> The v2 candidate at `0x981C81...` and original deployment at `0x78C17...`
+> are retained only as historical regression evidence.
 
 ## Security Properties
 
@@ -100,12 +98,10 @@ handling of unknown record IDs.
 The official `genvm-linter` 0.10.0 gate passes both AST linting and SDK semantic
 validation (9 public methods: 7 views and 2 writes).
 
-## Deployment Gate
+## Bradbury Deployment
 
-Do not cite a contract address as the hardened release until all steps in
-[STUDIO_BRADBURY_TEST_PLAN.md](STUDIO_BRADBURY_TEST_PLAN.md) pass against a
-fresh instance. Record the address, deployment transaction, exact source commit,
-source SHA-256, and all regression transactions in
+The final deployment, exact source commit and SHA-256, and live regression
+evidence are recorded in [DEPLOYMENT_BRADBURY.md](DEPLOYMENT_BRADBURY.md) and
 [TEST_LOG_BRADBURY.md](TEST_LOG_BRADBURY.md).
 
 ## Repository Layout

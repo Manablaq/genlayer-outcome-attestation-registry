@@ -17,15 +17,22 @@ genvm_linter: PASS (lint + SDK validation)
 | --- | --- | --- |
 | Deploy exact committed source | [transaction](https://explorer-bradbury.genlayer.com/tx/0xa1dc1a044e216202a778ca526006b54e4086ffbfd5d0c3ff58b18b663d06cd84) | accepted; unanimous `AGREE`; return |
 | Create hash-pinned request | [transaction](https://explorer-bradbury.genlayer.com/tx/0x64ec02f9c152019c4218aacafa856547d587c3d7ca409c1cc74bd0e51e0bc541) | request `1`; fingerprint `122ed6...064a` |
-| Resolve matching evidence | on-chain read after retry | request `1` reports `resolved: true` |
-| Read stored full-body hash | pending final CLI capture | registered IANA/RFC hashes |
-| Consume with exact fingerprint | pending final CLI capture | matching outcome `true` |
-| Consume with substituted fingerprint | pending final CLI capture | `false` |
-| Resolve incorrect evidence hash | Pending | execution error, no attestation |
-| Resolve two-source request | pending final CLI capture | `verified_source_count: 2` |
-| Submit stale observation | pending final CLI capture | execution error |
+| Resolve matching evidence | [transaction](https://explorer-bradbury.genlayer.com/tx/0x4a0a9c798f4da39d6ec93cc7d58e76d68720f2eff1533dac0b820d3dd726d5a7) plus final state read | stored result `1` (`true`), `criteria_satisfied` |
+| Read stored full-body hashes | CLI view `get_attestation(1)` | observed hashes exactly equal both registered SHA-256 commitments |
+| Consume with exact fingerprint | CLI view `is_attested_true_for(1, expected, 3600)` | `true` |
+| Consume with substituted fingerprint | same view with one-character substitution | `false` |
+| Resolve incorrect evidence hash | final-source unit regression plus [candidate live transaction](https://explorer-bradbury.genlayer.com/tx/0xceda4a932294beff8fef05fb3aafc1d92d4c16ae0c7c7744cd676c93ca1b84ed) | execution error; no attestation |
+| Resolve two-source request | CLI view `get_attestation(1)` | `content_verified: true`; `consensus_bound: true`; verified sources `2` |
+| Submit stale observation | final-source unit regression plus [candidate live transaction](https://explorer-bradbury.genlayer.com/tx/0x92eab86eb2f0a7229e6db6acd7b868bd7e47998a50b1e6d70669493410123070) | execution error |
+| Read unknown attestation | final v2.1 CLI view | controlled `unknown attestation` user error; consumer predicate returns `false` |
 
-The duplicate-resolution retry (`0xc21b16a97841befd3bdd1e53b46fd27ff8bc9042616c26286c95513faf1e9eb5`) reached consensus and correctly returned an execution error because request `1` was already resolved. This confirms the idempotency guard; it is not a source-integrity failure.
+The initial resolution transaction was observed during a leader-timeout state;
+the final contract state records `resolved_at: 1787624505`, matching that
+transaction's creation timestamp. Subsequent retries
+(`0x1bf70cc3c87ce2213e7bb0df11b23bcd6fb1bce40d8aeecef9d32ce883e73dd9`
+and `0xc21b16a97841befd3bdd1e53b46fd27ff8bc9042616c26286c95513faf1e9eb5`)
+correctly returned execution errors because request `1` was already resolved.
+This confirms the idempotency guard; it is not a source-integrity failure.
 
 ## Superseded v2 Candidate Regression
 

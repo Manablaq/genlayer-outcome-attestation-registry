@@ -21,7 +21,12 @@ hash-pinned public evidence into specification-bound attestations.
 ## Evidence Status
 
 The hardened v2.1 source is pinned at commit
-`60eed18e3861d650bad9895e5b43b277404159a9`. A final fresh deployment and the
-live regression links required by `STUDIO_BRADBURY_TEST_PLAN.md` must be
-recorded before resubmission. Candidate address `0x981C81...` and historical
-address `0x78C17...` are not the final hardened release.
+`60eed18e3861d650bad9895e5b43b277404159a9`, with source SHA-256
+`901a941a30da36af7b278094435d45f834e98d17042b3abfe7321add3fc5369c`.
+The matching Bradbury deployment is
+[`0xce871c6045e7B1B0c3F73652BFaeD02eB06A8252`](https://explorer-bradbury.genlayer.com/address/0xce871c6045e7B1B0c3F73652BFaeD02eB06A8252).
+Live verification stored a true, consensus-bound attestation only after both
+independent full-body hashes matched; exact-fingerprint consumption returned
+`true`, while a one-character fingerprint substitution returned `false`.
+Candidate address `0x981C81...` and historical address `0x78C17...` are not the
+final hardened release.
