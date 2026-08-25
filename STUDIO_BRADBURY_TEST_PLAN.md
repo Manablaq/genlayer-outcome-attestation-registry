@@ -2,7 +2,7 @@
 
 ## 1. Local Verification
 
-Run the commands in `docs/testing.md`. Confirm 13 tests pass and the primary and
+Run the commands in `docs/testing.md`. Confirm 14 tests pass and the primary and
 Studio sources are byte-identical.
 
 ## 2. Prepare Evidence

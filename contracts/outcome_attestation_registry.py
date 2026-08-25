@@ -507,13 +507,13 @@ class OutcomeAttestationRegistry(gl.Contract):
         )
 
         existing_id = self.latest_by_fingerprint.get(fingerprint, u256(0))
-        if existing_id != u256(0):
+        if existing_id != u256(0) and existing_id in self.attestations:
             existing = self.attestations.get(existing_id)
             if existing.expires_at > u256(now):
                 return existing_id
 
         pending_id = self.request_by_fingerprint.get(fingerprint, u256(0))
-        if pending_id != u256(0):
+        if pending_id != u256(0) and pending_id in self.requests:
             pending = self.requests.get(pending_id)
             if not pending.resolved and pending.request_expires_at > u256(now):
                 return pending_id
@@ -546,9 +546,9 @@ class OutcomeAttestationRegistry(gl.Contract):
 
     @gl.public.write
     def resolve_attestation(self, request_id: u256) -> None:
-        req = self.requests.get(request_id)
-        if req.created_at == u256(0):
+        if request_id not in self.requests:
             raise gl.vm.UserError("unknown request")
+        req = self.requests.get(request_id)
         if req.resolved:
             raise gl.vm.UserError("request already resolved")
 
@@ -600,16 +600,16 @@ class OutcomeAttestationRegistry(gl.Contract):
 
     @gl.public.view
     def get_request(self, request_id: u256) -> AttestationRequest:
-        req = self.requests.get(request_id)
-        if req.created_at == u256(0):
+        if request_id not in self.requests:
             raise gl.vm.UserError("unknown request")
+        req = self.requests.get(request_id)
         return req
 
     @gl.public.view
     def get_attestation(self, request_id: u256) -> Attestation:
-        attestation = self.attestations.get(request_id)
-        if attestation.created_at == u256(0):
+        if request_id not in self.attestations:
             raise gl.vm.UserError("unknown attestation")
+        attestation = self.attestations.get(request_id)
         return attestation
 
     @gl.public.view
@@ -692,6 +692,8 @@ class OutcomeAttestationRegistry(gl.Contract):
         expected_fingerprint: str,
         consumer_max_age_seconds: u256,
     ) -> bool:
+        if request_id not in self.attestations:
+            return False
         attestation = self.attestations.get(request_id)
         return self._matches_binding_and_freshness(
             attestation,
@@ -706,6 +708,8 @@ class OutcomeAttestationRegistry(gl.Contract):
         consumer_max_age_seconds: u256,
         expected_result: u32,
     ) -> bool:
+        if request_id not in self.attestations:
+            return False
         attestation = self.attestations.get(request_id)
         return (
             attestation.result == expected_result

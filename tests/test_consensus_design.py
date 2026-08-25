@@ -177,6 +177,12 @@ class OutcomeAttestationConsensusTests(unittest.TestCase):
         self.assertIn("MAX_EVIDENCE_AGE_SECONDS", SOURCE)
         self.assertIn("MAX_EVIDENCE_BYTES", SOURCE)
 
+    def test_missing_records_are_checked_before_attribute_access(self):
+        self.assertIn("if request_id not in self.requests:", SOURCE)
+        self.assertIn("if request_id not in self.attestations:", SOURCE)
+        self.assertNotIn("if req.created_at == u256(0):", SOURCE)
+        self.assertNotIn("if attestation.created_at == u256(0):", SOURCE)
+
 
 if __name__ == "__main__":
     unittest.main()

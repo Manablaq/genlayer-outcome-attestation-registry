@@ -94,9 +94,10 @@ cmp contracts/outcome_attestation_registry.py \
 git diff --check
 ```
 
-The 13-test suite includes behavioral regressions for the original delimiter collision,
+The 14-test suite includes behavioral regressions for the original delimiter collision,
 content mutation beyond the old 256-character prefix, hash mismatch rejection,
-two-source corroboration, resolution-time freshness, and consumer binding.
+two-source corroboration, resolution-time freshness, consumer binding, and safe
+handling of unknown record IDs.
 The official `genvm-linter` 0.10.0 gate passes both AST linting and SDK semantic
 validation (9 public methods: 7 views and 2 writes).
 
