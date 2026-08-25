@@ -3,8 +3,8 @@
 ## Hardened v2.1 Release
 
 ```text
-contract: PENDING_FRESH_DEPLOYMENT
-deployment_tx: PENDING_FRESH_DEPLOYMENT
+contract: 0xce871c6045e7B1B0c3F73652BFaeD02eB06A8252
+deployment_tx: 0xa1dc1a044e216202a778ca526006b54e4086ffbfd5d0c3ff58b18b663d06cd84
 source_commit: 60eed18e3861d650bad9895e5b43b277404159a9
 source_sha256: 901a941a30da36af7b278094435d45f834e98d17042b3abfe7321add3fc5369c
 local_tests: 14 passing
@@ -15,15 +15,17 @@ genvm_linter: PASS (lint + SDK validation)
 
 | Regression | Transaction / read | Expected result |
 | --- | --- | --- |
-| Deploy exact committed source | Pending | `AGREE`, return |
-| Create hash-pinned request | Pending | accepted request ID |
-| Resolve matching evidence | Pending | `content_verified: true` |
-| Read stored full-body hash | Pending | equals registered SHA-256 |
-| Consume with exact fingerprint | Pending | matching outcome `true` |
-| Consume with substituted fingerprint | Pending | `false` |
+| Deploy exact committed source | [transaction](https://explorer-bradbury.genlayer.com/tx/0xa1dc1a044e216202a778ca526006b54e4086ffbfd5d0c3ff58b18b663d06cd84) | accepted; unanimous `AGREE`; return |
+| Create hash-pinned request | [transaction](https://explorer-bradbury.genlayer.com/tx/0x64ec02f9c152019c4218aacafa856547d587c3d7ca409c1cc74bd0e51e0bc541) | request `1`; fingerprint `122ed6...064a` |
+| Resolve matching evidence | on-chain read after retry | request `1` reports `resolved: true` |
+| Read stored full-body hash | pending final CLI capture | registered IANA/RFC hashes |
+| Consume with exact fingerprint | pending final CLI capture | matching outcome `true` |
+| Consume with substituted fingerprint | pending final CLI capture | `false` |
 | Resolve incorrect evidence hash | Pending | execution error, no attestation |
-| Resolve two-source request | Pending | `verified_source_count: 2` |
-| Submit stale observation | Pending | execution error |
+| Resolve two-source request | pending final CLI capture | `verified_source_count: 2` |
+| Submit stale observation | pending final CLI capture | execution error |
+
+The duplicate-resolution retry (`0xc21b16a97841befd3bdd1e53b46fd27ff8bc9042616c26286c95513faf1e9eb5`) reached consensus and correctly returned an execution error because request `1` was already resolved. This confirms the idempotency guard; it is not a source-integrity failure.
 
 ## Superseded v2 Candidate Regression
 

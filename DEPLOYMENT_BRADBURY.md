@@ -1,11 +1,11 @@
 # Bradbury Deployment Record
 
-## Hardened v2.1 Release — Deployment Required
+## Hardened v2.1 Release — Bradbury
 
 ```text
-contract: PENDING_FRESH_DEPLOYMENT
-deployment_tx: PENDING_FRESH_DEPLOYMENT
-deployment_status: PENDING
+contract: 0xce871c6045e7B1B0c3F73652BFaeD02eB06A8252
+deployment_tx: 0xa1dc1a044e216202a778ca526006b54e4086ffbfd5d0c3ff58b18b663d06cd84
+deployment_status: ACCEPTED (finalization status should be checked in Explorer)
 source_commit: 60eed18e3861d650bad9895e5b43b277404159a9
 source_sha256: 901a941a30da36af7b278094435d45f834e98d17042b3abfe7321add3fc5369c
 ```
@@ -18,8 +18,9 @@ changed.
 
 The v2.1 source also handles every unknown record ID before dereferencing
 storage: getters return a controlled user error and consumer predicates return
-`false`. Do not mark this release submission-ready until the fresh deployment
-and every live regression in `STUDIO_BRADBURY_TEST_PLAN.md` are recorded.
+`false`. The final deployment uses the exact committed source above.
+
+Explorer links: [contract](https://explorer-bradbury.genlayer.com/address/0xce871c6045e7B1B0c3F73652BFaeD02eB06A8252), [deployment transaction](https://explorer-bradbury.genlayer.com/tx/0xa1dc1a044e216202a778ca526006b54e4086ffbfd5d0c3ff58b18b663d06cd84).
 
 ## Superseded v2 Candidate — Regression Evidence Only
 
